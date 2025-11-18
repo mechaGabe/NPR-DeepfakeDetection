@@ -15,6 +15,13 @@ class BaseOptions():
         parser.add_argument('--mode', default='binary')
         parser.add_argument('--arch', type=str, default='res50', help='architecture for binary classification')
 
+        # Multi-scale NPR options
+        parser.add_argument('--model_type', type=str, default='single_scale',
+                          choices=['single_scale', 'multiscale_attention'],
+                          help='model architecture: single_scale (original NPR) or multiscale_attention')
+        parser.add_argument('--npr_scales', type=str, default='0.25,0.5,0.75',
+                          help='scales for multi-scale NPR (comma-separated, e.g., "0.25,0.5,0.75")')
+
         # data augmentation
         parser.add_argument('--rz_interp', default='bilinear')
         parser.add_argument('--blur_prob', type=float, default=0)
@@ -113,6 +120,9 @@ class BaseOptions():
             opt.jpg_qual = list(range(opt.jpg_qual[0], opt.jpg_qual[1] + 1))
         elif len(opt.jpg_qual) > 2:
             raise ValueError("Shouldn't have more than 2 values for --jpg_qual.")
+
+        # Parse NPR scales for multi-scale model
+        opt.npr_scales = [float(s) for s in opt.npr_scales.split(',')]
 
         self.opt = opt
         return self.opt

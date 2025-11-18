@@ -6,6 +6,7 @@ import torch
 from util import Logger, printSet
 from validate import validate
 from networks.resnet import resnet50
+from networks.multiscale_npr import attention_multiscale_npr18
 from options.test_options import TestOptions
 import networks.resnet as resnet
 import numpy as np
@@ -48,9 +49,16 @@ DetectionTests = {
 
 opt = TestOptions().parse(print_options=False)
 print(f'Model_path {opt.model_path}')
+print(f'Model_type {opt.model_type}')
 
-# get model
-model = resnet50(num_classes=1)
+# get model - support both single-scale and multi-scale
+if opt.model_type == 'multiscale_attention':
+    print(f'Loading Multi-Scale Attention NPR with scales: {opt.npr_scales}')
+    model = attention_multiscale_npr18(num_classes=1, scales=opt.npr_scales)
+else:
+    print('Loading Single-Scale NPR (original)')
+    model = resnet50(num_classes=1)
+
 model.load_state_dict(torch.load(opt.model_path, map_location='cpu'), strict=True)
 model.cuda()
 model.eval()

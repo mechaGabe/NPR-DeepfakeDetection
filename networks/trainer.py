@@ -2,6 +2,7 @@ import functools
 import torch
 import torch.nn as nn
 from networks.resnet import resnet50
+from networks.multiscale_npr import attention_multiscale_npr18
 from networks.base_model import BaseModel, init_weights
 
 
@@ -12,11 +13,24 @@ class Trainer(BaseModel):
     def __init__(self, opt):
         super(Trainer, self).__init__(opt)
 
+        # Choose model architecture based on opt.model_type
+        model_type = getattr(opt, 'model_type', 'single_scale')  # Default to original
+
         if self.isTrain and not opt.continue_train:
-            self.model = resnet50(pretrained=False, num_classes=1)
+            if model_type == 'multiscale_attention':
+                print("Using Multi-Scale Attention NPR model")
+                scales = getattr(opt, 'npr_scales', [0.25, 0.5, 0.75])
+                self.model = attention_multiscale_npr18(num_classes=1, scales=scales)
+            else:
+                print("Using Single-Scale NPR model (original)")
+                self.model = resnet50(pretrained=False, num_classes=1)
 
         if not self.isTrain or opt.continue_train:
-            self.model = resnet50(num_classes=1)
+            if model_type == 'multiscale_attention':
+                scales = getattr(opt, 'npr_scales', [0.25, 0.5, 0.75])
+                self.model = attention_multiscale_npr18(num_classes=1, scales=scales)
+            else:
+                self.model = resnet50(num_classes=1)
 
         if self.isTrain:
             self.loss_fn = nn.BCEWithLogitsLoss()
